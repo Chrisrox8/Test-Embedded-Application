@@ -102,12 +102,15 @@ void setup() {
 	root["ipaddress"] = WiFi.localIP().toString();
 	char messageToSend[50];
 	root.printTo(messageToSend, sizeof(messageToSend));
-
+	String hey = messageToSend;
+	Serial.println("Sent: ");
+	Serial.println(hey);
 	delay(10000);
 	//Send microcontroller's ip address.
-	//sendUDPPacket(messageToSend);
-	sendUDPPacket("Hereeeeeeeeeeee");
-	Serial.println(messageToSend);
+	sendUDPPacket(hey);
+	//sendUDPPacket("Hereeeeeeeeeeee");
+	//sendUDPPacket();
+	//Serial.println(messageToSend);
 	//Disconnet Access Point wifi after a successful connection.
 	delay(10000);
 	//WiFi.softAPdisconnect(true);
@@ -184,21 +187,38 @@ bool setupSTAMode(char wifiName[], char password[])
 	return connected;
 }
 
-void sendUDPPacket(char ReplyBuffer[50])
+//void sendUDPPacket(char ReplyBuffer[256])
+//{
+//	int port = 4000;
+//	//messageToSend.toCharArray(ReplyBuffer, messageToSend.length() + 1);
+//	Udp.beginPacket(Udp.remoteIP(), port);
+//	Serial.println("first");
+//	Serial.println(ReplyBuffer);
+//	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
+//	Udp.endPacket();
+//}
+
+
+void sendUDPPacket(String messageToSend)
 {
+	char ReplyBuffer[256] = "";
 	int port = 4000;
-	//messageToSend.toCharArray(ReplyBuffer, messageToSend.length() + 1);
+	messageToSend.toCharArray(ReplyBuffer, messageToSend.length()+1);
+	Serial.println(ReplyBuffer);
 	Udp.beginPacket(Udp.remoteIP(), port);
 	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
 	Udp.endPacket();
 }
 
-void sendUDPPacket(String messageToSend)
-{
-	char ReplyBuffer[50];
-	int port = 4000;
-	messageToSend.toCharArray(ReplyBuffer, 50);
-	Udp.beginPacket(Udp.remoteIP(), port);
-	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
-	Udp.endPacket();
-}
+////char ReplyBuffer[256] = "ackwnowledgment";
+//void sendUDPPacket()
+//{
+//	String test = "hello";
+//	//char ReplyBuffer[256] = test;
+//	char ReplyBuffer[256] = "ackwnowledgment";
+//	int port = 4000;
+//	//messageToSend.toCharArray(ReplyBuffer, messageToSend.length());
+//	Udp.beginPacket(Udp.remoteIP(), port);
+//	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
+//	Udp.endPacket();
+//}
