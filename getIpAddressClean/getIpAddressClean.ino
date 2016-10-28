@@ -102,17 +102,17 @@ void setup() {
 	root["ipaddress"] = WiFi.localIP().toString();
 	char messageToSend[50];
 	root.printTo(messageToSend, sizeof(messageToSend));
-	String hey = messageToSend;
+	String toSendData = messageToSend;
 	Serial.println("Sent: ");
-	Serial.println(hey);
-	delay(10000);
+	Serial.println(toSendData);
+	delay (15000);
+
 	//Send microcontroller's ip address.
-	sendUDPPacket(hey);
-	//sendUDPPacket("Hereeeeeeeeeeee");
-	//sendUDPPacket();
-	//Serial.println(messageToSend);
+	sendUDPPacket(toSendData);
+	
+	
 	//Disconnet Access Point wifi after a successful connection.
-	delay(10000);
+	//delay(10000);
 	//WiFi.softAPdisconnect(true);
 	Serial.println(WiFi.localIP());
 	
@@ -201,12 +201,13 @@ bool setupSTAMode(char wifiName[], char password[])
 
 void sendUDPPacket(String messageToSend)
 {
-	char ReplyBuffer[256] = "";
+	char ReplyBuffer[256];
 	int port = 4000;
 	messageToSend.toCharArray(ReplyBuffer, messageToSend.length()+1);
+	//ReplyBuffer[messageToSend.length()] = 0;
 	Serial.println(ReplyBuffer);
 	Udp.beginPacket(Udp.remoteIP(), port);
-	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
+	Udp.write(ReplyBuffer);
 	Udp.endPacket();
 }
 
