@@ -18,6 +18,11 @@ WiFiUDP Udp;
 //WIFI STATION DEFINITIONS
 bool connected = false;		//It will be set to true if the microcontroller succ
 
+//PIN DEFINITIONS
+// CONTROLLING PINS
+int outlet1 = 1, outlet2 = 2, outlet3 = 3, outlet4 = 4;
+
+
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -115,12 +120,72 @@ void setup() {
 	//delay(10000);
 	//WiFi.softAPdisconnect(true);
 	Serial.println(WiFi.localIP());
-	
+
+	//SET UP PINS.
+	setUpPins();
 	
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
+	int noBytes;
+	noBytes = Udp.parsePacket();
+	if (noBytes != NULL)
+	{
+		String packetReceived = "";
+		packetReceived = receiveUDPPacket(noBytes);
+
+		//JSON PROCESSING
+		StaticJsonBuffer<200> jsonBuffer;
+
+		JsonObject& root = jsonBuffer.parseObject(packetReceived);
+
+		if (!root.success())
+		{
+			Serial.println("parseObject() failed");
+			return;
+		}
+		enum commands { onOff1, onOff2, onOff3, onOff4};
+
+		String  command = root["command"];
+		Serial.println("Command: ");
+		Serial.println(command);
+
+		int status = 0;		//Holds an outlet status.
+
+		if (command = "onOff1")
+		{
+			status = digitalRead(outlet1);
+			Serial.println(status);
+			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			Serial.println(status);
+		}
+		else if (command = "onOff2")
+		{
+			status = digitalRead(outlet1);
+			Serial.println(status);
+			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			Serial.println(status);
+		}
+		else if (command = "onOff3")
+		{
+			status = digitalRead(outlet1);
+			Serial.println(status);
+			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			Serial.println(status);
+		}
+		else if (command = "onOff4")
+		{
+			status = digitalRead(outlet1);
+			Serial.println(status);
+			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			Serial.println(status);
+		}
+		else
+		{
+			//Do nothing for now.
+		}
+	}
   
 }
 
@@ -187,17 +252,6 @@ bool setupSTAMode(char wifiName[], char password[])
 	return connected;
 }
 
-//void sendUDPPacket(char ReplyBuffer[256])
-//{
-//	int port = 4000;
-//	//messageToSend.toCharArray(ReplyBuffer, messageToSend.length() + 1);
-//	Udp.beginPacket(Udp.remoteIP(), port);
-//	Serial.println("first");
-//	Serial.println(ReplyBuffer);
-//	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
-//	Udp.endPacket();
-//}
-
 
 void sendUDPPacket(String messageToSend)
 {
@@ -211,15 +265,12 @@ void sendUDPPacket(String messageToSend)
 	Udp.endPacket();
 }
 
-////char ReplyBuffer[256] = "ackwnowledgment";
-//void sendUDPPacket()
-//{
-//	String test = "hello";
-//	//char ReplyBuffer[256] = test;
-//	char ReplyBuffer[256] = "ackwnowledgment";
-//	int port = 4000;
-//	//messageToSend.toCharArray(ReplyBuffer, messageToSend.length());
-//	Udp.beginPacket(Udp.remoteIP(), port);
-//	Udp.write(ReplyBuffer, sizeof(ReplyBuffer));
-//	Udp.endPacket();
-//}
+
+void setUpPins()
+{
+	// sets controlling pins as outputs
+	pinMode(outlet1, OUTPUT);    
+	pinMode(outlet2, OUTPUT);
+	pinMode(outlet3, OUTPUT);
+	pinMode(outlet4, OUTPUT);
+}
