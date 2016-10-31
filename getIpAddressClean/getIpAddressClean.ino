@@ -8,6 +8,7 @@
 #include <WiFiUDP.h>
 #include <ArduinoJson.h>
 
+
 //ACCESS POINT DEFINITIONS.
 const char WiFiAPPassword[] = "12345678";
 
@@ -20,14 +21,19 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 
 //PIN DEFINITIONS
 // CONTROLLING PINS
-int outlet1 = 1, outlet2 = 2, outlet3 = 3, outlet4 = 4;
+int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
 
 
 // the setup function runs once when you press reset or power the board
 void setup() {
 
+	setUpPins();
+	digitalWrite(outlet1, HIGH);
+
 	// Open serial communications
 	Serial.begin(115200);
+	
+	Serial.println("Hello");
 	while (!Serial) {
 		; // wait for serial port to connect.
 	}
@@ -111,26 +117,31 @@ void setup() {
 	Serial.println("Sent: ");
 	Serial.println(toSendData);
 	delay (15000);
-
+	
+	Serial.println("Start sending a udp Packet");
 	//Send microcontroller's ip address.
 	sendUDPPacket(toSendData);
-	
+	digitalWrite(outlet1, HIGH);
 	
 	//Disconnet Access Point wifi after a successful connection.
 	//delay(10000);
 	//WiFi.softAPdisconnect(true);
-	Serial.println(WiFi.localIP());
+	//Serial.println(WiFi.localIP());
 
+	Serial.println("Setting pins");
 	//SET UP PINS.
-	setUpPins();
+	
+	Serial.println("Finished Setting pins");
 	
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
+
 	int noBytes;
 	noBytes = Udp.parsePacket();
-	if (noBytes != NULL)
+	
+	if (noBytes)
 	{
 		String packetReceived = "";
 		packetReceived = receiveUDPPacket(noBytes);
@@ -153,32 +164,32 @@ void loop() {
 
 		int status = 0;		//Holds an outlet status.
 
-		if (command = "onOff1")
+		if (command == "onOff1")
 		{
 			status = digitalRead(outlet1);
 			Serial.println(status);
 			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
 			Serial.println(status);
 		}
-		else if (command = "onOff2")
+		else if (command == "onOff2")
 		{
-			status = digitalRead(outlet1);
+			status = digitalRead(outlet2);
 			Serial.println(status);
-			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			digitalWrite(outlet2, status = !status);   // switch on to off or vice versa.
 			Serial.println(status);
 		}
-		else if (command = "onOff3")
+		else if (command == "onOff3")
 		{
-			status = digitalRead(outlet1);
+			status = digitalRead(outlet3);
 			Serial.println(status);
-			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			digitalWrite(outlet3, status = !status);   // switch on to off or vice versa.
 			Serial.println(status);
 		}
-		else if (command = "onOff4")
+		else if (command == "onOff4")
 		{
-			status = digitalRead(outlet1);
+			status = digitalRead(outlet4);
 			Serial.println(status);
-			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
+			digitalWrite(outlet4, status = !status);   // switch on to off or vice versa.
 			Serial.println(status);
 		}
 		else
@@ -186,6 +197,8 @@ void loop() {
 			//Do nothing for now.
 		}
 	}
+	Serial.print(noBytes);
+	delay(1000);
   
 }
 
@@ -259,9 +272,11 @@ void sendUDPPacket(String messageToSend)
 	int port = 4000;
 	messageToSend.toCharArray(ReplyBuffer, messageToSend.length()+1);
 	//ReplyBuffer[messageToSend.length()] = 0;
-	Serial.println(ReplyBuffer);
+	Serial.println("Begin packet");
 	Udp.beginPacket(Udp.remoteIP(), port);
+	Serial.print("Begin sending ");
 	Udp.write(ReplyBuffer);
+	Serial.print("Begin done ");
 	Udp.endPacket();
 }
 
