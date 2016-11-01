@@ -159,45 +159,38 @@ void loop() {
 		enum commands { onOff1, onOff2, onOff3, onOff4};
 
 		String  command = root["command"];
-		Serial.println("Command: ");
-		Serial.println(command);
-
+		
 		int status = 0;		//Holds an outlet status.
 
 		if (command == "onOff1")
 		{
-			status = digitalRead(outlet1);
-			Serial.println(status);
-			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.
-			Serial.println(status);
+			status = digitalRead(outlet1);		
+			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.		
 		}
 		else if (command == "onOff2")
 		{
-			status = digitalRead(outlet2);
-			Serial.println(status);
+			status = digitalRead(outlet2);			
 			digitalWrite(outlet2, status = !status);   // switch on to off or vice versa.
-			Serial.println(status);
+			
 		}
 		else if (command == "onOff3")
 		{
-			status = digitalRead(outlet3);
-			Serial.println(status);
+			status = digitalRead(outlet3);			
 			digitalWrite(outlet3, status = !status);   // switch on to off or vice versa.
-			Serial.println(status);
+			
 		}
 		else if (command == "onOff4")
 		{
-			status = digitalRead(outlet4);
-			Serial.println(status);
+			status = digitalRead(outlet4);			
 			digitalWrite(outlet4, status = !status);   // switch on to off or vice versa.
-			Serial.println(status);
+			
 		}
 		else
 		{
 			//Do nothing for now.
 		}
 	}
-	Serial.print(noBytes);
+	
 	delay(1000);
   
 }
