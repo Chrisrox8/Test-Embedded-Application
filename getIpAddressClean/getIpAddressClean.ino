@@ -22,8 +22,14 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 //PIN DEFINITIONS
 // CONTROLLING PINS
 int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
+int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
+int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
 
+//COntroll sending 
+int sendingVariable = 0;
 
+//REMOTE IP ADDRESS
+char remoteIP[] = "192.168.4.2";
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -120,7 +126,7 @@ void setup() {
 	
 	Serial.println("Start sending a udp Packet");
 	//Send microcontroller's ip address.
-	sendUDPPacket(toSendData);
+	sendUDPPacket(toSendData, 4000);
 	digitalWrite(outlet1, HIGH);
 	
 	//Disconnet Access Point wifi after a successful connection.
@@ -156,10 +162,13 @@ void loop() {
 			Serial.println("parseObject() failed");
 			return;
 		}
-		enum commands { onOff1, onOff2, onOff3, onOff4};
+		
 
 		String  command = root["command"];
-		
+		String remoteIP = root["remoteIP"];
+		Serial.println("Remote IP: ");
+		Serial.println(remoteIP);
+
 		int status = 0;		//Holds an outlet status.
 
 		if (command == "onOff1")
@@ -191,6 +200,32 @@ void loop() {
 		}
 	}
 	
+	if (sendingVariable < 5)
+	{
+		//Reserve memory space
+		StaticJsonBuffer<200> jsonBufferSend;
+
+		//Build object tree in memory
+		JsonObject& root = jsonBufferSend.createObject();
+		root["out1Volt"] = String(outVoltage1); root["out2Volt"] = String(outVoltage2);
+		root["out3Volt"] = String(outVoltage3); root["out4Volt"] = String(outVoltage4);
+
+		root["out1Curr"] = String(outCurrent1); root["out2Curr"] = String(outCurrent2);
+		root["out3Curr"] = String(outCurrent3); root["out4Curr"] = String(outCurrent4);
+
+		char messageToSend[200];
+		root.printTo(messageToSend, sizeof(messageToSend));
+		String toSendData = messageToSend;
+		
+		//send UDP Packet
+		delay(4000);
+		sendUDPPacket(toSendData, 4000);
+
+		outCurrent1++; outCurrent2++; outCurrent3++; outCurrent4++;
+		outVoltage1++; outVoltage2++; outVoltage3++; outVoltage4++;
+
+		sendingVariable++;
+	}	
 	delay(1000);
   
 }
@@ -259,17 +294,12 @@ bool setupSTAMode(char wifiName[], char password[])
 }
 
 
-void sendUDPPacket(String messageToSend)
+void sendUDPPacket(String messageToSend, int port)
 {
-	char ReplyBuffer[256];
-	int port = 4000;
+	char ReplyBuffer[256];	
 	messageToSend.toCharArray(ReplyBuffer, messageToSend.length()+1);
-	//ReplyBuffer[messageToSend.length()] = 0;
-	Serial.println("Begin packet");
-	Udp.beginPacket(Udp.remoteIP(), port);
-	Serial.print("Begin sending ");
-	Udp.write(ReplyBuffer);
-	Serial.print("Begin done ");
+	Udp.beginPacket(remoteIP, port);	
+	Udp.write(ReplyBuffer);	
 	Udp.endPacket();
 }
 
