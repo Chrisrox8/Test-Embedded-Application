@@ -207,22 +207,22 @@ void loop() {
 
 		//Build object tree in memory
 		JsonObject& root = jsonBufferSend.createObject();
-		root["out1Volt"] = String(outVoltage1); root["out2Volt"] = String(outVoltage2);
-		root["out3Volt"] = String(outVoltage3); root["out4Volt"] = String(outVoltage4);
+		root["t"] = "123456789";
+		root["v"] = String(outVoltage1); 
 
-		root["out1Curr"] = String(outCurrent1); root["out2Curr"] = String(outCurrent2);
-		root["out3Curr"] = String(outCurrent3); root["out4Curr"] = String(outCurrent4);
+		root["c1"] = String(outCurrent1); root["c2"] = String(outCurrent2);
+		root["c3"] = String(outCurrent3); root["c4"] = String(outCurrent4);
 
 		char messageToSend[200];
 		root.printTo(messageToSend, sizeof(messageToSend));
 		String toSendData = messageToSend;
 		
 		//send UDP Packet
-		delay(4000);
+		//delay(4000);
 		sendUDPPacket(toSendData, 4000);
 
 		outCurrent1++; outCurrent2++; outCurrent3++; outCurrent4++;
-		outVoltage1++; outVoltage2++; outVoltage3++; outVoltage4++;
+		outVoltage1++;
 
 		sendingVariable++;
 	}	
