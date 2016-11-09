@@ -24,6 +24,7 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
 int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
 int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
+ulong t = 1478701652L; //using an int for time will trigger an error in 2038.
 
 //COntroll sending 
 int sendingVariable = 0;
@@ -33,12 +34,14 @@ char remoteIP[] = "192.168.4.2";
 // the setup function runs once when you press reset or power the board
 void setup() {
 
+	
 	setUpPins();
 	digitalWrite(outlet1, HIGH);
 
 	// Open serial communications
 	Serial.begin(115200);
 	
+	Serial.println(t);
 	Serial.println("Hello");
 	while (!Serial) {
 		; // wait for serial port to connect.
@@ -207,7 +210,7 @@ void loop() {
 
 		//Build object tree in memory
 		JsonObject& root = jsonBufferSend.createObject();
-		root["t"] = "123456789";
+		root["t"] = String(t);
 		root["v"] = String(outVoltage1); 
 
 		root["c1"] = String(outCurrent1); root["c2"] = String(outCurrent2);
@@ -220,7 +223,7 @@ void loop() {
 		//send UDP Packet
 		//delay(4000);
 		sendUDPPacket(toSendData, 4000);
-
+		t++;
 		outCurrent1++; outCurrent2++; outCurrent3++; outCurrent4++;
 		outVoltage1++;
 
