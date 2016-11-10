@@ -29,6 +29,9 @@ ulong t = 1478701652L; //using an int for time will trigger an error in 2038.
 //COntroll sending 
 int sendingVariable = 0;
 
+//RECEIVED FROM ATMEGA 328P
+String receivedFromAtmega;
+
 //REMOTE IP ADDRESS
 char remoteIP[] = "192.168.4.2";
 // the setup function runs once when you press reset or power the board
@@ -39,10 +42,12 @@ void setup() {
 	digitalWrite(outlet1, HIGH);
 
 	// Open serial communications
-	Serial.begin(115200);
-	
+	Serial.begin(9600);
+	//Serial1.begin()
+	//Serial2.begin()
 	Serial.println(t);
 	Serial.println("Hello");
+	
 	while (!Serial) {
 		; // wait for serial port to connect.
 	}
@@ -147,6 +152,22 @@ void setup() {
 // the loop function runs over and over again until power down or reset
 void loop() {
 
+	if (Serial.available())
+	{
+		receivedFromAtmega = Serial.readString();
+		Serial.println("Receiving data");
+		Serial.println(receivedFromAtmega);
+		sendUDPPacket("Hello", 4000);
+		delay(1000);
+		sendUDPPacket(receivedFromAtmega, 4000);
+	}
+	Serial.println("DOne Receiveing");
+
+	//if (receivedFromAtmega){
+	//	Serial.println(str);
+	//}
+	//str = '\n';
+
 	int noBytes;
 	noBytes = Udp.parsePacket();
 	
@@ -215,6 +236,7 @@ void loop() {
 
 		root["c1"] = String(outCurrent1); root["c2"] = String(outCurrent2);
 		root["c3"] = String(outCurrent3); root["c4"] = String(outCurrent4);
+		
 
 		char messageToSend[200];
 		root.printTo(messageToSend, sizeof(messageToSend));

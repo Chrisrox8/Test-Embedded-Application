@@ -101,4 +101,5 @@ C:\Users\Rene\ Moise\AppData\Local\Temp\VMicroBuilds\getIpAddressClean\esp8266_n
  C:\Users\Rene\ Moise\Documents\Arduino\libraries\ArduinoJson\src/../include/ArduinoJson/JsonObject.ipp \
  C:\Users\Rene\ Moise\Documents\Arduino\libraries\ArduinoJson\src/../include/ArduinoJson/JsonObjectSubscript.hpp \
  C:\Users\Rene\ Moise\Documents\Arduino\libraries\ArduinoJson\src/../include/ArduinoJson/JsonArraySubscript.hpp \
- C:\Users\Rene\ Moise\Documents\Arduino\libraries\ArduinoJson\src/../include/ArduinoJson/StaticJsonBuffer.hpp
+ C:\Users\Rene\ Moise\Documents\Arduino\libraries\ArduinoJson\src/../include/ArduinoJson/StaticJsonBuffer.hpp \
+ C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\ 12.0\Common7\IDE\Extensions\vdu2ay0x.vrg\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h
