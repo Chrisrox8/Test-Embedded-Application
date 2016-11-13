@@ -24,7 +24,8 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
 int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
 int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
-ulong t = 1478701652L; //using an int for time will trigger an error in 2038.
+int status1 = 0, status2 = 0, status3 = 0, status4 = 0;
+ ulong t = 1478982114L; //using an int for time will trigger an error in 2038.
 
 //COntroll sending 
 int sendingVariable = 0;
@@ -193,29 +194,29 @@ void loop() {
 		Serial.println("Remote IP: ");
 		Serial.println(remoteIP);
 
-		int status = 0;		//Holds an outlet status.
+		//int status = 0;		//Holds an outlet status.
 
 		if (command == "onOff1")
 		{
-			status = digitalRead(outlet1);		
-			digitalWrite(outlet1, status = !status);   // switch on to off or vice versa.		
+			status1 = digitalRead(outlet1);		
+			digitalWrite(outlet1, status1 = !status1);   // switch on to off or vice versa.		
 		}
 		else if (command == "onOff2")
 		{
-			status = digitalRead(outlet2);			
-			digitalWrite(outlet2, status = !status);   // switch on to off or vice versa.
+			status2 = digitalRead(outlet2);			
+			digitalWrite(outlet2, status2 = !status2);   // switch on to off or vice versa.
 			
 		}
 		else if (command == "onOff3")
 		{
-			status = digitalRead(outlet3);			
-			digitalWrite(outlet3, status = !status);   // switch on to off or vice versa.
+			status3 = digitalRead(outlet3);			
+			digitalWrite(outlet3, status3 = !status3);   // switch on to off or vice versa.
 			
 		}
 		else if (command == "onOff4")
 		{
-			status = digitalRead(outlet4);			
-			digitalWrite(outlet4, status = !status);   // switch on to off or vice versa.
+			status4 = digitalRead(outlet4);			
+			digitalWrite(outlet4, status4 = !status4);   // switch on to off or vice versa.
 			
 		}
 		else
@@ -224,10 +225,12 @@ void loop() {
 		}
 	}
 	
-	if (sendingVariable < 5)
+	//if (sendingVariable < 5)
 	{
 		//Reserve memory space
-		StaticJsonBuffer<200> jsonBufferSend;
+		StaticJsonBuffer<250> jsonBufferSend;
+
+		//status1 = 1;
 
 		//Build object tree in memory
 		JsonObject& root = jsonBufferSend.createObject();
@@ -236,7 +239,8 @@ void loop() {
 
 		root["c1"] = String(outCurrent1); root["c2"] = String(outCurrent2);
 		root["c3"] = String(outCurrent3); root["c4"] = String(outCurrent4);
-		
+		root["s1"] = String(status1); root["s2"] = String(status2);
+		root["s3"] = String(status3); root["s4"] = String(status4);
 
 		char messageToSend[200];
 		root.printTo(messageToSend, sizeof(messageToSend));
