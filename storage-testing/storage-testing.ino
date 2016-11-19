@@ -1,10 +1,13 @@
 // Very basic Spiffs example, writing 10 strings to SPIFFS filesystem, and then read them back
 // For SPIFFS doc see : https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md
-// Compiled in Arduino 1.6.7. Runs OK on Wemos D1 ESP8266 board.
 
+#include <SoftwareSerial.h>
+#include <ArduinoJson.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
+
+
 
 //-- Preferences --
 char ssid[] = "eaglesnet";  //  your network SSID (name)
@@ -18,6 +21,10 @@ unsigned long epoch;
 unsigned long lastEpoch;
 File f;
 bool firstTimeWriting = true;
+String str = "";
+Dir dir;
+int t = 123456;
+int pos; 
 //unsigned long mostRecentFetch;
 
 unsigned int localPort = 2390;      // local port to listen for UDP packets
@@ -35,9 +42,14 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packe
 									// A UDP instance to let us send and receive packets over UDP
 WiFiUDP udp;
 
+SoftwareSerial mySerial(D3, D4);
+
 void setup() {
 	Serial.begin(9600);
-	Serial.println("\nVery basic Spiffs example, writing 10 lines to SPIFFS filesystem, and then read them back");
+	Serial.setTimeout(900);
+	mySerial.begin(9600);
+	while (!Serial) {} //Wait for serial communication to start
+	mySerial.println("\nVery basic Spiffs example, writing 10 lines to SPIFFS filesystem, and then read them back");
 	SPIFFS.begin();
 	// Next lines have to be done ONLY ONCE!!!!!When SPIFFS is formatted ONCE you can comment these lines out!!
 	//Serial.println("Please wait 30 secs for SPIFFS to be formatted");
@@ -45,18 +57,18 @@ void setup() {
 	//Serial.println("Spiffs formatted");
 
 	//-- Open Serial port to Arduino --
-	Serial.println("Hi");
+	mySerial.println("Hi");
 
 	//-- Connect to WiFi network --
 	WiFi.begin(ssid, pass);
 	while (WiFi.status() != WL_CONNECTED) {
 		delay(500);
 	}
-	Serial.println("WiFi");
 
 	//-- Start UDP --
 	udp.begin(localPort);
-	Serial.println("Ready!");
+	mySerial.println("Ready!");
+	dir = SPIFFS.openDir("/");
 }
 
 void loop() {
@@ -66,18 +78,26 @@ void loop() {
 		// open file for reading
 		f = SPIFFS.open("/f.txt", "r");
 		if (!f) {
-			Serial.println("file open failed");
-		}  Serial.println("======= Reading from SPIFFS file =======");
+			mySerial.println("file open failed");
+		}  mySerial.println("======= Reading from SPIFFS file =======");
 		int i = 0;
 		// read strings from file
 		String s;
 		while((s = f.readStringUntil('\n')) != NULL) {
 			//Serial.print(i);
-			Serial.print(":");
-			Serial.println(s);
+			mySerial.print(":");
+			mySerial.println(s);
 			//i++;
 		}
+		
 		f.close();
+		while (dir.next()) {
+			str += dir.fileName();
+			str += " / ";
+			str += dir.fileSize();
+			str += "\r\n";
+		}
+		mySerial.print(str);
 }
 
 void writeRecordsToDevice(String path) {
@@ -88,7 +108,7 @@ void writeRecordsToDevice(String path) {
 		lastEpoch += 1;
 		epochString = (String)epoch;
 	}
-	if (firstTimeWriting){
+	if (firstTimeWriting) {
 		f = SPIFFS.open(path, "w");
 		firstTimeWriting = false;
 	}
@@ -96,14 +116,90 @@ void writeRecordsToDevice(String path) {
 		// open file for writing
 		f = SPIFFS.open(path, "a");
 	}
-	
-	if (!f) {
-		Serial.println("file open failed");
-	}
-	Serial.println("====== Writing to SPIFFS file =========");
-	// write 10 strings to file
-	f.println(";V:120,C1:40,C2:30,C3:20,C4:10,T:" + epochString);
 
+	if (!f) {
+		mySerial.println("file open failed");
+	}
+	mySerial.println("====== Writing to SPIFFS file =========");
+	// write 10 strings to file
+
+	//Reserve memory space
+	StaticJsonBuffer<200> jsonBuffer;
+	//char temp[100]; //= "{\"t\":\"-7616\",\"v\":\"0.00\",\"c1\":\"0.05\",\"c2\":\"4.01\",\"c3\":\"8.66\",\"c4\":\"12.95\"}";
+	int incomingSerialDataIndex = 0;
+	
+		//temp[incomingSerialDataIndex] = Serial.read(); // Add the incoming byte to the array
+		//incomingSerialDataIndex++; // Ensure the next byte is added in the next position
+	
+		//Serial.readBytesUntil('\n',temp,73);
+	//while (Serial.available() && pos < sizeof temp - 1) {
+
+	//	// Read incoming byte.
+	//	char c = Serial.read();
+	//	temp[pos++] = c;
+
+	//	// Echo received message.
+	//	if (c == '\n') {            // \n means "end of message"
+	//		temp[pos] = '\0';     // terminate the buffer
+	//		mySerial.print(temp);   // send echo
+	//		pos = 0;                // reset to start of buffer
+	//	}
+	//}
+
+	//char buffer[75];
+	bool read = false;
+	String temp;
+	while ( Serial.available()) {
+		mySerial.println("Got data");
+		if ((temp=Serial.readStringUntil('\n')) != 0) {
+			
+			//Serial.print(i);
+			mySerial.print(":");
+
+			mySerial.println(temp);
+			mySerial.println("Done printing");
+			read = true;
+			//i++;
+		}
+		else
+			mySerial.println("No string");
+	}
+
+	mySerial.println("Message received");
+	mySerial.println(temp);
+		//Parse object received from 328P
+	JsonObject& root = jsonBuffer.parseObject(temp);
+
+	if (!root.success())
+	{
+		mySerial.println("parseObject() failed");
+		return;
+	}
+
+	//
+	// Step 3: Retrieve the values
+	//
+	// Received in this form: {"t":"-7616","v":"0.00","c1":"0.05","c2":"4.01","c3":"8.66","c4":"12.95"}
+	float        current1 = root["c1"];
+	float        current2 = root["c2"];
+	float        current3 = root["c3"];
+	float        current4 = root["c4"];
+	float        voltage = root["v"];
+
+	f.println(";V:" + (String)voltage + ",C1:" + (String)current1 + ",C2:" + (String)current2
+		+ ",C3:" + (String)current3 + ",C4:" + (String)current4 + ",T:" + epochString);
+
+	/*StaticJsonBuffer<200> jsonBuffer1;
+	JsonObject& root1 = jsonBuffer1.createObject();
+	root1["v"] = voltage + .01;
+	root1["c1"] = current1 + .01;
+	root1["c2"] = current2 + .01;
+	root1["c3"] = current3 + .01;
+	root1["c4"] = current4 + .01;
+	root1["t"] = epochString;
+
+	root1.printTo(temp);*/
+	mySerial.println(temp);
 	f.close();
 
 }
@@ -123,11 +219,11 @@ void GetTimeFromInternet()
 
 	int cb = udp.parsePacket();
 	if (!cb) {
-		Serial.println("Fail");
+		mySerial.println("Fail");
 	}
 	else {
 		//Serial.print("OK ");
-		Serial.println(cb);
+		mySerial.println(cb);
 		// We've received a packet, read the data from it
 		udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
@@ -148,7 +244,7 @@ void GetTimeFromInternet()
 		//mostRecentFetch = millis();
 		
 		epochString = String(epoch);
-		Serial.println(epoch);
+		mySerial.println(epoch);
 	}
 }
 
