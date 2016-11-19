@@ -4,17 +4,31 @@
  Author:	Rene Moise Kwibuka
 */
 
+//Includes.
 #include <ESP8266WiFi.h>
 #include <WiFiUDP.h>
 #include <ArduinoJson.h>
-
+#include <SoftwareSerial.h>
+#include <FS.h>
 
 //ACCESS POINT DEFINITIONS.
-const char WiFiAPPassword[] = "12345678";
+const char WIFI_AP_PASSWORD[] = "12345678";
 
 //UDP DEFINITIONS
 int udpPort = 2390;
 WiFiUDP Udp;
+
+//TIME DEFINITIONS
+//int timeZone = -6;
+//char line[80] = "";
+//unsigned long epoch;
+//unsigned long lastEpoch;
+//File f;
+//bool firstTimeWriting = true;
+//String str = "";
+//Dir dir;
+ulong t = 1478982114L; //using an int for time will trigger an error in 2038.
+//int pos;
 
 //WIFI STATION DEFINITIONS
 bool connected = false;		//It will be set to true if the microcontroller succ
@@ -25,7 +39,7 @@ int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
 int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
 int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
 int status1 = 0, status2 = 0, status3 = 0, status4 = 0;
- ulong t = 1478982114L; //using an int for time will trigger an error in 2038.
+ 
 
 //COntroll sending 
 int sendingVariable = 0;
@@ -34,7 +48,7 @@ int sendingVariable = 0;
 String receivedFromAtmega;
 
 //REMOTE IP ADDRESS
-char remoteIP[] = "192.168.4.2";
+char remoteIP[15] = "192.168.4.2";
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -103,7 +117,7 @@ void setup() {
 
 
 			//Turn the wifi mode off so we can switch to both AP and STA.
-			WiFi.mode(WIFI_OFF);
+			//WiFi.mode(WIFI_OFF);
 
 			received = true;		//This becomes false again if the setup fails.
 
@@ -177,6 +191,8 @@ void loop() {
 		String packetReceived = "";
 		packetReceived = receiveUDPPacket(noBytes);
 
+		Serial.println(packetReceived);
+
 		//JSON PROCESSING
 		StaticJsonBuffer<200> jsonBuffer;
 
@@ -190,10 +206,18 @@ void loop() {
 		
 
 		String  command = root["command"];
-		String remoteIP = root["remoteIP"];
+		String remIP = root["remoteIP"];
 		Serial.println("Remote IP: ");
 		Serial.println(remoteIP);
 
+		if (remIP != "")
+		{
+			remIP.toCharArray(remoteIP, sizeof(remoteIP));
+			
+			Serial.println("New IP address: ");
+			Serial.println(remoteIP);
+		}
+		
 		//int status = 0;		//Holds an outlet status.
 
 		if (command == "onOff1")
@@ -294,7 +318,7 @@ void setupAPWiFi()
 	for (int i = 0; i < AP_NameString.length(); i++)
 		AP_NameChar[i] = AP_NameString.charAt(i);
 
-	WiFi.softAP(AP_NameChar, WiFiAPPassword);
+	WiFi.softAP(AP_NameChar, WIFI_AP_PASSWORD);
 }
 
 //Connect to the wifi.
