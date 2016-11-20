@@ -15,8 +15,7 @@ char pass[] = "";       // your network password
 int timeZone = -6;
 //unsigned long getTimeEveryXmillis = 15 * 1000; // every 15 seconds
 
-//unsigned long timeToGetTime;
-char line[80] = "";
+//unsigned long timeToGetTime
 unsigned long epoch;
 unsigned long lastEpoch;
 File f;
@@ -27,7 +26,7 @@ int t = 123456;
 int pos; 
 //unsigned long mostRecentFetch;
 
-unsigned int localPort = 2390;      // local port to listen for UDP packets
+unsigned int localPort = 2391;      // local port to listen for UDP packets
 
 									/* Don't hardwire the IP address or we won't get the benefits of the pool.
 									*  Lookup the IP address for the host name instead */
