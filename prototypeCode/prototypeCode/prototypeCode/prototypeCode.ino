@@ -37,7 +37,7 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 
 							//PIN DEFINITIONS
 							// CONTROLLING PINS
-int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D5;
+int outlet1 = D1, outlet2 = D2, outlet3 = D5, outlet4 = D6;
 int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
 int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
 int status1 = 0, status2 = 0, status3 = 0, status4 = 0;
@@ -59,8 +59,10 @@ SoftwareSerial mySerial(D3, D4);
 // the setup function runs once when you press reset or power the board
 void setup() {
 
+	
+
 	setUpPins();
-	digitalWrite(outlet1, HIGH);
+	//digitalWrite(outlet1, HIGH);
 
 	// Initializations.
 	mySerial.begin(9600);		//for serial debugging purposes.
@@ -158,7 +160,7 @@ void setup() {
 	mySerial.println("Start sending a udp Packet");
 	//Send microcontroller's ip address.
 	sendUDPPacket(toSendData, 4000);
-	digitalWrite(outlet1, HIGH);
+	//digitalWrite(outlet1, HIGH);
 
 	//Disconnet Access Point wifi after a successful connection.
 	//delay(10000);
@@ -257,24 +259,64 @@ void loop() {
 		if (command == "onOff1")
 		{
 			status1 = digitalRead(outlet1);
-			digitalWrite(outlet1, status1 = !status1);   // switch on to off or vice versa.		
+			if (status1 == 0)
+			{
+				digitalWrite(outlet1, HIGH);	
+				status1 = 1;
+			}
+			else
+			{
+				digitalWrite(outlet1, LOW);
+				status1 = 0;
+			}
+			   // switch on to off or vice versa.		
 		}
 		else if (command == "onOff2")
 		{
 			status2 = digitalRead(outlet2);
-			digitalWrite(outlet2, status2 = !status2);   // switch on to off or vice versa.
+			if (status2 == 0)
+			{
+				digitalWrite(outlet2, HIGH);
+				status2 = 1;
+			}
+			else
+			{
+				digitalWrite(outlet2, LOW);
+				status2 = 0;
+			}
+			// switch on to off or vice versa.		
 
 		}
 		else if (command == "onOff3")
 		{
 			status3 = digitalRead(outlet3);
-			digitalWrite(outlet3, status3 = !status3);   // switch on to off or vice versa.
+			if (status3 == 0)
+			{
+				digitalWrite(outlet3, HIGH);
+				status3 = 1;
+			}
+			else
+			{
+				digitalWrite(outlet3, LOW);
+				status3 = 0;
+			}
+			// switch on to off or vice versa.		
 
 		}
 		else if (command == "onOff4")
 		{
 			status4 = digitalRead(outlet4);
-			digitalWrite(outlet4, status4 = !status4);   // switch on to off or vice versa.
+			if (status4 == 0)
+			{
+				digitalWrite(outlet4, HIGH);
+				status4 = 1;
+			}
+			else
+			{
+				digitalWrite(outlet4,LOW);
+				status4 = 0;
+			}
+			// switch on to off or vice versa.		
 
 		}
 		else
@@ -360,8 +402,9 @@ String getDataFromATMEGA()
 	root1["c4"] = current4;
 	root1["t"] = epochString;
 
-    root1["s1"] = String(status1); root1["s2"] = String(status2);
-   root1["s3"] = String(status3); root1["s4"] = String(status4);
+    root1["s1"] = String(!status1); root1["s2"] = String(!status2);
+   root1["s3"] = String(!status3); root1["s4"] = String(!status4);
+   root1["ipaddress"] = WiFi.localIP().toString();
    String dataToSend;
    root1.printTo(dataToSend);
    mySerial.println(dataToSend);
@@ -521,4 +564,17 @@ void setUpPins()
 	pinMode(outlet2, OUTPUT);
 	pinMode(outlet3, OUTPUT);
 	pinMode(outlet4, OUTPUT);
+
+	//Set pins
+    digitalWrite(outlet1, HIGH);
+	digitalWrite(outlet2, HIGH);
+	digitalWrite(outlet3, HIGH);
+	digitalWrite(outlet4, HIGH);
+
+	//status setup
+	status1 = 1;
+	status2 = 1;
+	status3 = 1;
+	status4 = 1;
+
 }
