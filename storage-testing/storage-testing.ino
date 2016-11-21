@@ -67,7 +67,7 @@ void setup() {
 	//-- Start UDP --
 	udp.begin(localPort);
 	mySerial.println("Ready!");
-	dir = SPIFFS.openDir("/");
+	//dir = SPIFFS.openDir("/");
 }
 
 void loop() {
@@ -172,6 +172,7 @@ void writeRecordsToDevice(String path) {
 	if (!root.success())
 	{
 		mySerial.println("parseObject() failed");
+		temp = " ";
 		return;
 	}
 

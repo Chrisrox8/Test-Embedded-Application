@@ -23,7 +23,7 @@ int timeZone = -6; //The time zone we are in
 unsigned long epoch; //The date and time in UNIX format
 unsigned long lastEpoch; //The previous value of data and time in UNIX format
 File f; //The file that has the power records on the ESP8266
-unsigned int localPort = 2391;      // local port to listen for UDP packets
+unsigned int udpTimePort = 2391;      // local port to listen for UDP packets
 IPAddress timeServerIP; // time.nist.gov NTP server address
 const char* ntpServerName = "time.nist.gov";
 String epochString;
@@ -37,7 +37,7 @@ bool connected = false;		//It will be set to true if the microcontroller succ
 
 							//PIN DEFINITIONS
 							// CONTROLLING PINS
-int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D3;
+int outlet1 = D0, outlet2 = D1, outlet3 = D2, outlet4 = D5;
 int outVoltage1 = 2, outVoltage2 = 2, outVoltage3 = 2, outVoltage4 = 2;
 int outCurrent1 = 2, outCurrent2 = 2, outCurrent3 = 2, outCurrent4 = 2;
 int status1 = 0, status2 = 0, status3 = 0, status4 = 0;
@@ -47,34 +47,40 @@ int status1 = 0, status2 = 0, status3 = 0, status4 = 0;
 int sendingVariable = 0;
 
 //RECEIVED FROM ATMEGA 328P
-String receivedFromAtmega;
+//String receivedFromAtmega;
+
 
 //REMOTE IP ADDRESS
 char remoteIP[15] = "192.168.4.2";
 // the setup function runs once when you press reset or power the board
+
+
+//mySerial COMMUNICATION DEFINITIONS
+SoftwareSerial mySerial(D3, D4);
+
 void setup() {
 
-
+	
 	setUpPins();
 	digitalWrite(outlet1, HIGH);
 
-	// Open serial communications
-	Serial.begin(9600);
-	//Serial1.begin()
-	//Serial2.begin()
-	Serial.println(t);
-	Serial.println("Hello");
+	// Initializations.
+	mySerial.begin(9600);		//for serial debugging purposes.
+	Serial.begin(9600);			//for ATMEGA328P serial communication	
+	SPIFFS.begin();				//For file system.
 
-	while (!Serial) {
-		; // wait for serial port to connect.
-	}
-
+	mySerial.println("STARTING POINT....");
+	//while (!mySerial) {
+		
+	//	; // wait for mySerial port to connect.
+	//}
+	mySerial.println("Not waiting anymore");
 	//Set up access point
 	setupAPWiFi();
 
 	//start udp.
 	Udp.begin(udpPort);
-
+	//Udp.begin(udpTimePort);
 
 
 	bool received = false; //It turns true if any packet is received.
@@ -84,13 +90,14 @@ void setup() {
 	while (!received)
 	{
 		noBytes = Udp.parsePacket();
-
+		mySerial.println("Listening");
 		if (noBytes)
 		{
 			//Receive a packet
 			String packetReceived = "";
 			packetReceived = receiveUDPPacket(noBytes);
-			//Serial.println(packetReceived);
+			mySerial.println("Packet Received");
+		    mySerial.println(packetReceived);
 
 
 			//JSON PROCESSING
@@ -100,7 +107,7 @@ void setup() {
 
 			if (!root.success())
 			{
-				Serial.println("parseObject() failed");
+				mySerial.println("parseObject() failed");
 				return;
 			}
 
@@ -113,8 +120,8 @@ void setup() {
 			wifiName.toCharArray(wifiNameChar, wifiName.length() + 1);
 			password.toCharArray(passwordChar, password.length() + 1);
 
-			Serial.println(wifiNameChar);
-			Serial.println(passwordChar);
+			mySerial.println(wifiNameChar);
+			mySerial.println(passwordChar);
 			//END JSON PROCESSING
 
 
@@ -131,6 +138,7 @@ void setup() {
 				WiFi.mode(WIFI_AP);	//Set Access Point Mode On.
 			}
 		}
+		delay(1000);
 	}
 
 	//Send the ip address back to the phone
@@ -145,11 +153,11 @@ void setup() {
 	char messageToSend[50];
 	root.printTo(messageToSend, sizeof(messageToSend));
 	String toSendData = messageToSend;
-	Serial.println("Sent: ");
-	Serial.println(toSendData);
+	mySerial.println("Sent: ");
+	mySerial.println(toSendData);
 	delay(15000);
 
-	Serial.println("Start sending a udp Packet");
+	mySerial.println("Start sending a udp Packet");
 	//Send microcontroller's ip address.
 	sendUDPPacket(toSendData, 4000);
 	digitalWrite(outlet1, HIGH);
@@ -157,34 +165,60 @@ void setup() {
 	//Disconnet Access Point wifi after a successful connection.
 	//delay(10000);
 	//WiFi.softAPdisconnect(true);
-	//Serial.println(WiFi.localIP());
+	//mySerial.println(WiFi.localIP());
 
-	Serial.println("Setting pins");
+	mySerial.println("Setting pins");
 	//SET UP PINS.
 
-	Serial.println("Finished Setting pins");
+	mySerial.println("Finished Setting pins");
 
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
 
-	if (Serial.available())
+	//Get time
+	GetTimeFromInternet();
+
+	//Get Data
+	String readData = getDataFromATMEGA();
+
+	
+	if (readData != " ")
 	{
-		receivedFromAtmega = Serial.readString();
-		Serial.println("Receiving data");
-		Serial.println(receivedFromAtmega);
-		sendUDPPacket("Hello", 4000);
+		//STORE DATA
+
+		// open file for writing
+		f = SPIFFS.open("f.txt", "a");
+		f.println(readData);
+		f.close();
+
 		delay(1000);
-		sendUDPPacket(receivedFromAtmega, 4000);
+
+		mySerial.println("Before Sending");
+		//SEND DATA
+		sendUDPPacket(readData, 4000);
+
+		mySerial.println("Done Sending");
 	}
-	Serial.println("DOne Receiveing");
 
-	//if (receivedFromAtmega){
-	//	Serial.println(str);
+	//if (mySerial.available())
+	//{
+	//	receivedFromAtmega = mySerial.readString();
+	//	mySerial.println("Receiving data");
+	//	mySerial.println(receivedFromAtmega);
+	//	sendUDPPacket("Hello", 4000);
+	//	delay(1000);
+	//	sendUDPPacket(receivedFromAtmega, 4000);
 	//}
-	//str = '\n';
+	//mySerial.println("DOne Receiveing");
 
+	////if (receivedFromAtmega){
+	////	mySerial.println(str);
+	////}
+	////str = '\n';
+
+	//LISTEN TO COMMANDS
 	int noBytes;
 	noBytes = Udp.parsePacket();
 
@@ -193,7 +227,7 @@ void loop() {
 		String packetReceived = "";
 		packetReceived = receiveUDPPacket(noBytes);
 
-		Serial.println(packetReceived);
+		mySerial.println(packetReceived);
 
 		//JSON PROCESSING
 		StaticJsonBuffer<200> jsonBuffer;
@@ -202,22 +236,22 @@ void loop() {
 
 		if (!root.success())
 		{
-			Serial.println("parseObject() failed");
+			mySerial.println("parseObject() failed");
 			return;
 		}
 
 
 		String  command = root["command"];
 		String remIP = root["remoteIP"];
-		Serial.println("Remote IP: ");
-		Serial.println(remoteIP);
+		mySerial.println("Remote IP: ");
+		mySerial.println(remoteIP);
 
 		if (remIP != "")
 		{
 			remIP.toCharArray(remoteIP, sizeof(remoteIP));
 
-			Serial.println("New IP address: ");
-			Serial.println(remoteIP);
+			mySerial.println("New IP address: ");
+			mySerial.println(remoteIP);
 		}
 
 		//int status = 0;		//Holds an outlet status.
@@ -252,37 +286,165 @@ void loop() {
 	}
 
 	//if (sendingVariable < 5)
-	{
-		//Reserve memory space
-		StaticJsonBuffer<250> jsonBufferSend;
+	//{
+	//	//Reserve memory space
+	//	StaticJsonBuffer<250> jsonBufferSend;
 
-		//status1 = 1;
+	//	//status1 = 1;
 
-		//Build object tree in memory
-		JsonObject& root = jsonBufferSend.createObject();
-		root["t"] = String(t);
-		root["v"] = String(outVoltage1);
+	//	//Build object tree in memory
+	//	JsonObject& root = jsonBufferSend.createObject();
+	//	root["t"] = String(t);
+	//	root["v"] = String(outVoltage1);
 
-		root["c1"] = String(outCurrent1); root["c2"] = String(outCurrent2);
-		root["c3"] = String(outCurrent3); root["c4"] = String(outCurrent4);
-		root["s1"] = String(status1); root["s2"] = String(status2);
-		root["s3"] = String(status3); root["s4"] = String(status4);
 
-		char messageToSend[200];
-		root.printTo(messageToSend, sizeof(messageToSend));
-		String toSendData = messageToSend;
 
-		//send UDP Packet
-		//delay(4000);
-		sendUDPPacket(toSendData, 4000);
-		t++;
-		outCurrent1++; outCurrent2++; outCurrent3++; outCurrent4++;
-		outVoltage1++;
+	//	char messageToSend[200];
+	//	root.printTo(messageToSend, sizeof(messageToSend));
+	//	String toSendData = messageToSend;
 
-		sendingVariable++;
-	}
+	//	//send UDP Packet
+	//	//delay(4000);
+	//	sendUDPPacket(toSendData, 4000);
+	//	t++;
+	//	outCurrent1++; outCurrent2++; outCurrent3++; outCurrent4++;
+	//	outVoltage1++;
+
+	//	sendingVariable++;
+	//}
 	delay(1000);
 
+}
+
+//GET DATA FUNCTION
+String getDataFromATMEGA()
+{
+	String temp;
+	while (Serial.available()) {
+		mySerial.println("Got data");
+		if ((temp = Serial.readStringUntil('\n')) != 0) {
+
+			//Serial.print(i);
+			mySerial.print(":");
+
+			mySerial.println(temp);
+			mySerial.println("Done printing");
+		}
+	}
+
+	StaticJsonBuffer<200> jsonBuffer;
+	//Parse object received from 328P
+	JsonObject& root = jsonBuffer.parseObject(temp);
+
+	if (!root.success())
+	{
+		mySerial.println("parseObject() failed");
+		temp = " ";
+		return temp;
+	}
+
+	//
+	// Step 3: Retrieve the values
+	//
+	// Received in this form: {"t":"-7616","v":"0.00","c1":"0.05","c2":"4.01","c3":"8.66","c4":"12.95"}
+	float        current1 = root["c1"];
+	float        current2 = root["c2"];
+	float        current3 = root["c3"];
+	float        current4 = root["c4"];
+	float        voltage = root["v"];
+
+	StaticJsonBuffer<200> jsonBuffer1;
+	JsonObject& root1 = jsonBuffer1.createObject();
+	root1["v"] = voltage;
+	root1["c1"] = current1;
+	root1["c2"] = current2;
+	root1["c3"] = current3;
+	root1["c4"] = current4;
+	root1["t"] = epochString;
+
+    root1["s1"] = String(status1); root1["s2"] = String(status2);
+   root1["s3"] = String(status3); root1["s4"] = String(status4);
+   String dataToSend;
+   root1.printTo(dataToSend);
+   mySerial.println(dataToSend);
+   return dataToSend;
+}
+
+//STORE DATA FUNCTION
+void storeData()
+{
+
+}
+
+//TIME FUNCTIONS
+void GetTimeFromInternet()
+{
+	//get a random server from the pool
+	WiFi.hostByName(ntpServerName, timeServerIP);
+
+	sendNTPpacket(timeServerIP); // send an NTP packet to a time server
+
+	// wait to see if a reply is available
+	for (int w = 0; w<10; w++)
+	{
+		delay(100);
+	}
+
+	int cb = Udp.parsePacket();
+	if (!cb) {
+		mySerial.println("Fail");
+	}
+	else {
+		//Serial.print("OK ");
+		mySerial.println(cb);
+		// We've received a packet, read the data from it
+		Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+
+		//the timestamp starts at byte 40 of the received packet and is four bytes,
+		// or two words, long. First, esxtract the two words:
+		unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+		unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+
+		// combine the four bytes (two words) into a long integer
+		// this is NTP time (seconds since Jan 1 1900):
+		unsigned long secsSince1900 = highWord << 16 | lowWord;
+
+		// now convert NTP time into everyday time:
+		// Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+		const unsigned long seventyYears = 2208988800UL;
+		lastEpoch = epoch;
+		epoch = secsSince1900 - seventyYears;
+		//mostRecentFetch = millis();
+
+		epochString = String(epoch);
+		mySerial.println(epoch);
+	}
+}
+
+
+// send an NTP request to the time server at the given address
+unsigned long sendNTPpacket(IPAddress& address)
+{
+	///Serial.println("sending NTP packet...");
+	// set all bytes in the buffer to 0
+	memset(packetBuffer, 0, NTP_PACKET_SIZE);
+	// Initialize values needed to form NTP request
+	// (see URL above for details on the packets)
+	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+	packetBuffer[1] = 0;     // Stratum, or type of clock
+	packetBuffer[2] = 6;     // Polling Interval
+	packetBuffer[3] = 0xEC;  // Peer Clock Precision
+	// 8 bytes of zero for Root Delay & Root Dispersion
+	packetBuffer[12] = 49;
+	packetBuffer[13] = 0x4E;
+	packetBuffer[14] = 49;
+	packetBuffer[15] = 52;
+
+	// all NTP fields have been given values, now
+	// you can send a packet requesting a timestamp:
+	Udp.beginPacket(address, 123); //NTP requests are to port 123
+	Udp.write(packetBuffer, NTP_PACKET_SIZE);
+	Udp.endPacket();
 }
 
 String receiveUDPPacket(int maxSize)
@@ -293,8 +455,8 @@ String receiveUDPPacket(int maxSize)
 	if (len > 0) {
 		packetBuffer[len] = 0;
 	}
-	Serial.print("String Received: ");
-	//Serial.println(packetBuffer);
+	mySerial.print("String Received: ");
+	//mySerial.println(packetBuffer);
 	String packet = packetBuffer;
 	return packet;
 }
@@ -334,7 +496,7 @@ bool setupSTAMode(char wifiName[], char password[])
 	while (WiFi.status() != WL_CONNECTED)
 	{
 		delay(500);
-		Serial.print(".");
+		mySerial.print(".");
 		tries++;
 		if (tries > 30)
 		{
@@ -351,6 +513,7 @@ bool setupSTAMode(char wifiName[], char password[])
 
 void sendUDPPacket(String messageToSend, int port)
 {
+	
 	char ReplyBuffer[256];
 	messageToSend.toCharArray(ReplyBuffer, messageToSend.length() + 1);
 	Udp.beginPacket(remoteIP, port);
