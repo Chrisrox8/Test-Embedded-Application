@@ -52,15 +52,13 @@ int sendingVariable = 0;
 
 //REMOTE IP ADDRESS
 char remoteIP[15] = "192.168.4.2";
-// the setup function runs once when you press reset or power the board
-
 
 //mySerial COMMUNICATION DEFINITIONS
 SoftwareSerial mySerial(D3, D4);
 
+// the setup function runs once when you press reset or power the board
 void setup() {
 
-	
 	setUpPins();
 	digitalWrite(outlet1, HIGH);
 
@@ -141,7 +139,7 @@ void setup() {
 		delay(1000);
 	}
 
-	//Send the ip address back to the phone
+	//SEND THE IP ADDRESS BACK TO THE PHONE
 
 	//Reserve memory space
 	StaticJsonBuffer<200> jsonBufferSend;
@@ -332,7 +330,7 @@ String getDataFromATMEGA()
 		}
 	}
 
-	StaticJsonBuffer<200> jsonBuffer;
+	StaticJsonBuffer<200> jsonBuffer; //Buffer to hold JSON object received from ATMega 328P
 	//Parse object received from 328P
 	JsonObject& root = jsonBuffer.parseObject(temp);
 
@@ -368,12 +366,6 @@ String getDataFromATMEGA()
    root1.printTo(dataToSend);
    mySerial.println(dataToSend);
    return dataToSend;
-}
-
-//STORE DATA FUNCTION
-void storeData()
-{
-
 }
 
 //TIME FUNCTIONS
@@ -416,7 +408,7 @@ void GetTimeFromInternet()
 		epoch = secsSince1900 - seventyYears;
 		//mostRecentFetch = millis();
 
-		epochString = String(epoch);
+		epochString = String(epoch); //String version of epoch to
 		mySerial.println(epoch);
 	}
 }
