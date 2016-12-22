@@ -1,2 +1,4 @@
 # Test-Mobile-Application
 The Outsmart team has a mission to design a device that plugs into a standard U.S. outlet and provides sockets for electrical loads. The device will record the power profile (kWh usage) of each load, allowing each load to be independently turned on or off by time or by remote control using a phone app and Wi-fi connection. The load data will also be processed and displayed by the app. Once the smart outlet system is designed, an attempt to market it will be made. 
+
+The code in this repository are built for the ESP8266 microcontroller. They are being developped in an arduino environment. The code is responsible of receiving analog data from ATMEGA328P, store them, and send them to the phone app via wi-fi. analog data is composed of indvidual load currents and the system's main voltage. It also gets time off the internet. Along with other data, it is sent to the phone app.
