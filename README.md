@@ -1,2 +1,2 @@
 # Test-Mobile-Application
-First round of designing a mobile application for the Smart Outlet. Shall have basic menu functionality on mobile devices.
+The Outsmart team has a mission to design a device that plugs into a standard U.S. outlet and provides sockets for electrical loads. The device will record the power profile (kWh usage) of each load, allowing each load to be independently turned on or off by time or by remote control using a phone app and Wi-fi connection. The load data will also be processed and displayed by the app. Once the smart outlet system is designed, an attempt to market it will be made. 
